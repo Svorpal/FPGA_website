@@ -321,7 +321,7 @@
 
               <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> The boids_update.sv design consists of an 8-state finite-state machine(FSM_1 in Figure 12). The state machine performs calculations such as centering, avoiding, and matching forces, then updates the boid's position and velocity sequentially. The final state marks the completion of the update for the current boid, and the process repeats for the remaining boids in the system. Figure 12 shows the FSM in boids_update.sv for better understanding.</p>
 
-              <img class="img-rounded" src="pictures/FSM_2.jpg" alt="Generic placeholder image">
+              <img class="img-rounded" src="pictures/FSM_1.jpg" alt="Generic placeholder image">
               <h3> <b>Figure 12. FSM_1 Boid Algorithm Calculation.</b> </h3> <br>  
               
               <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> In the first INIT state, the module takes the current boids state from the local array boids_attr_array. <a href="https://github.com/Svorpal/FPGA_website/blob/main/ultimate/boids_update.sv#L278"> [code snippet]</a></p>
