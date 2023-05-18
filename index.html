@@ -285,63 +285,310 @@
 <br> <br> <br> <br> <br> <br>
       <div style="text-align:center;">
               <h3>Alternative Design Low Level: HPS</h3>
-              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum lorem nulla, consectetur at leo vel, pretium bibendum nisl. Cras blandit quam a enim ultrices, eu convallis enim posuere. Donec eleifend enim sed purus consectetur, vitae cursus lectus varius. Vivamus consectetur felis nec est venenatis posuere. Phasellus vitae aliquet erat. In laoreet lacinia mollis. Quisque iaculis nisl fermentum pharetra lobortis. Donec rhoncus dui sem, ac molestie leo tristique vel. Phasellus in nibh feugiat, fringilla lectus in, elementum magna. Etiam quis dui condimentum, tempus ex in, dapibus est. Cras ut congue augue. Donec ac enim ex. Ut id tristique risus, vel porttitor quam. Sed ultricies enim eu nibh porttitor, vel sodales enim feugiat. Fusce volutpat venenatis magna ac ultrices. Curabitur eget urna ut nulla mattis convallis non eu diam.</p>
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;">On the SRAM, the first few addresses from 0xC0000000 to 0xC3FFFFFF are reserved for VGA display. Therefore, the addresses storing boids’ information range from  0xC4000000 to 0xC4000FFF. In our design, we assign the first address as a finished handshake flag between the HPS and the FPGA, assign the 2nd to 5th addresses to the x position, y position, x velocity, and y velocity of the first boid, assign the  6th to 9th addresses to the x position, y position, x velocity, and y velocity of the second boid, etc.</p>
+
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;">On the HPS side, in the main function of the c code, we first create and initialize the boid instances by calling initialization and spawn boid functions. They are identical to their counterparts in the baseline C code.  <a href="https://github.com/Svorpal/FPGA_website/blob/main/demo/three_boid_ultimate_vga.c#L335-L341"> [code snippet]</a></p>  
+
+               <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> Then in an infinite while loop,  we draw the boundary lines and start the timer for execution time. <a href="https://github.com/Svorpal/FPGA_website/blob/main/demo/three_boid_ultimate_vga.c#L342-L349"> [code snippet]</a></p>
+
+               <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> Inside each iteration, we first erase traces of previous boids on the VGA screen by iterating through the local boid array on the HPS side and drawing all the previous locations where our boids appeared in black. <a href="https://github.com/Svorpal/FPGA_website/blob/main/demo/three_boid_ultimate_vga.c#L350-L357"> [code snippet]</a></p>
+
+               <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> Second, the HPS stores the data from HPS local arrays in the SRAM. After it finishes storing, the data at address  0xC4000000, or the finished handshake flag, is marked as 1 to indicate that the HPS has finished storing. <a href="https://github.com/Svorpal/FPGA_website/blob/main/demo/three_boid_ultimate_vga.c#L358-L373"> [code snippet]</a></p>
+
+               <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> Third, while the FPGA is updating the boid, the data at address 0xC4000000, indicated by the fp_ram_ptr, remains as 1. Once it is set to 0, the HPS will know that the FPGA has finished updating the boids’ information and finished storing them back to the same addresses inside the SRAM. <a href="https://github.com/Svorpal/FPGA_website/blob/main/demo/three_boid_ultimate_vga.c#L374-L376"> [code snippet]</a></p>
+
+               <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> Fourth, After seeing the finished flag from the FPGA, the HPS proceeds to read from the SRAM addresses and updates local boid arrays with the corresponding updated data from the SRAM. Furthermore, the HPS draws the boids at new locations using the updated x and y coordinates by iterating through the local arrays and painting pixels corresponding to the x and y coordinates of the boids in white. <a href="https://github.com/Svorpal/FPGA_website/blob/main/demo/three_boid_ultimate_vga.c#L378-L393"> [code snippet]</a></p>
+
+               <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> Fifth, the timer is stopped and the HPS calculates the total time, including time for  HPS writing to SRAM, FPGA reading from SRAM, FPGA boid algorithm execution, FPGA writing to SRAM, HPS reading from SRAM, and HPS drawing on the VGA.  Moreover, the HPS prints the time on the VGA screen, and delays for 17 ms before the next iteration of the infinite while loop to ensure the frame rate of the VGA screen is kept at 60 Hz. <a href="https://github.com/Svorpal/FPGA_website/blob/main/demo/three_boid_ultimate_vga.c#L394-L409"> [code snippet]</a></p>
+
       </div>
 
     <hr id='alt-fpga'>
 <br> <br> <br> <br> <br> <br>
       <div style="text-align:center;">
               <h3>Alternative Design Low Level: FPGA</h3>
-              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum lorem nulla, consectetur at leo vel, pretium bibendum nisl. Cras blandit quam a enim ultrices, eu convallis enim posuere. Donec eleifend enim sed purus consectetur, vitae cursus lectus varius. Vivamus consectetur felis nec est venenatis posuere. Phasellus vitae aliquet erat. In laoreet lacinia mollis. Quisque iaculis nisl fermentum pharetra lobortis. Donec rhoncus dui sem, ac molestie leo tristique vel. Phasellus in nibh feugiat, fringilla lectus in, elementum magna. Etiam quis dui condimentum, tempus ex in, dapibus est. Cras ut congue augue. Donec ac enim ex. Ut id tristique risus, vel porttitor quam. Sed ultricies enim eu nibh porttitor, vel sodales enim feugiat. Fusce volutpat venenatis magna ac ultrices. Curabitur eget urna ut nulla mattis convallis non eu diam.</p>
+              <h4> Boids Update hardware design </h4>
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;">A high-level diagram of the boids update module is shown in Figure 10. We use a boids_attr_array on the FPGA side for the module to get the previous updated state because the algorithm updates the boids sequentially in each update. This is one of the design tradeoffs we made when we designed this hardware structure. We could use only the SRAM instead of creating this local array, but it would substantially increase the overall cycle time due to read/write latency. Conversely, creating this array requires a significant number of logic units, which could limit our hardware utility when we scale up the boids. As our main objective is to speed up the updating process on the FPGA, we made the choice of creating a local array to store the boids’ state. Another design decision we made is the 12.15 format fix point representation, this is because we used fix15 in our C baseline code, and each multiplier in FPGA consists of 27 bits.</p>
+
+
+              <img class="img-rounded" src="pictures/hardware HL.jpg" alt="Generic placeholder image" height="550">
+              <h3> <b>Figure 10. The hardware structure on the FPGA side.</b> </h3> <br>
+
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> In order to establish communication between the SRAM and the boids_update.sv, we wrote a 4-state finite-state machine(FSM_2 in Figure 11). This FSM enables the boid_update module to identify the boid currently being updated and determine the appropriate address for accessing the boids_attr_array. After the INIT state, the FSM enters CALC state and the counter starts from 0, which means that the update starts from boid 0. The boids_update module also enables and starts to calculate in this state. Upon receipt of the finish flag from boids_update.sv, the FSM transitions to the "DONE" state and proceeds to increment the counter by 1, initiating the update for the next boid. After all the boids finish their update, it then switches to ALL_FINISH state, an all_finish flag is asserted in this state indicating that we can start writing the updated value from boids_attr_array back to the SRAM. <a href="https://github.com/Svorpal/FPGA_website/blob/main/ultimate/DE1_SoC_Computer.sv#L597-L664"> [code snippet]</a></p>
+
+              <img class="img-rounded" src="pictures/FSM_2.jpg" alt="Generic placeholder image">
+              <h3> <b>Figure 11. FSM_2 between SRAM and FPGA.</b> </h3> <br>
+
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> The boids_update.sv design consists of an 8-state finite-state machine(FSM_1 in Figure 12). The state machine performs calculations such as centering, avoiding, and matching forces, then updates the boid's position and velocity sequentially. The final state marks the completion of the update for the current boid, and the process repeats for the remaining boids in the system. Figure 12 shows the FSM in boids_update.sv for better understanding.</p>
+
+              <img class="img-rounded" src="pictures/FSM_2.jpg" alt="Generic placeholder image">
+              <h3> <b>Figure 12. FSM_1 Boid Algorithm Calculation.</b> </h3> <br>  
+              
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> In the first INIT state, the module takes the current boids state from the local array boids_attr_array. <a href="https://github.com/Svorpal/FPGA_website/blob/main/ultimate/boids_update.sv#L278"> [code snippet]</a></p>
+
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;">Then, it computes the squared distance between current boids(x) and every other boids(x_o).  <a href="https://github.com/Svorpal/FPGA_website/blob/main/ultimate/boids_update.sv#L99-L101"> [code snippet]</a></p>
+
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;">The BOIDS_NUM_CHK state checks whether the other boid number matches the current one. It skips the CALC state if two numbers are matched. Otherwise, we calculate the distance between them and add the neighboring boids counter if they are within the visual range. The loop between these two states terminates when the counter reaches the total number of boids(NUM_OF_BOIDS) and forward to the SPD_UPDATE state. <a href="https://github.com/Svorpal/FPGA_website/blob/main/ultimate/boids_update.sv#L423-L441"> [code snippet]</a></p>
+
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> In CALC state, if the squared distance is within the visual range, we update the average position and the neighboring counter for later use.<a href="https://github.com/Svorpal/FPGA_website/blob/main/ultimate/boids_update.sv#L319-L329"> [code snippet]</a></p>
+
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> In SPD_UPDATE, if the neighboring counter is larger than 1, the velocity is updated using the output from the speed_update module. This module contains the combination logic of calculating the average x and y position of boids multiplied by the matching and centering factor. Essentially, the average needs division operation, which is very expensive to implement in hardware. The workaround we came up with is to use a lookup table with 2000 entries to get the approximate reciprocal value of the neighboring counter, then we use a signed multiplier to calculate the average position.  <a href="https://github.com/Svorpal/FPGA_website/blob/main/ultimate/speed_update.sv#L1-L79"> [code snippet]</a></p>
+
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> For the BOUND_CHK state, the output in this state is connected with the bound_check module. The purpose of this module is to check whether the boid is out of the boundary. If so, we add a turnfactor to slow the boid down and let it turn around back in the boundary. Otherwise, the boid remains at the same speed as the previous state.  <a href="https://github.com/Svorpal/FPGA_website/blob/main/ultimate/bound_check.sv#L1-L19C8004"> [code snippet]</a></p>
+
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> The SPD_LIMIT_CHK is a little tricky in our Verilog implementation. In our C baseline design, we use both the division and square root to remain the same x/y ratio after the speed up or slow down. However, due to the hardware utility limitation mentioned above, we add or substrate a small amount of value to the boid instead of using a dedicated square root module. While it is possible to calculate the square root on the HPS side, we discarded this idea to prevent potential slowdowns in the overall boid update computation.  <a href="https://github.com/Svorpal/FPGA_website/blob/main/ultimate/boids_update.sv#L353-L377"> [code snippet]</a></p>
+
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> The final x/y coordinates of the boid are determined in POS_UPDATE state. During this state, the updated x and y velocities, obtained from the previous state, are added to the current x and y coordinates. For instance, the x position is calculated as the sum of the current x coordinate and the x velocity (e.g., x_pos = x + vx). To prevent the boids from jumping out of the VGA screen, we add a checker to ensure the boid is inside the screen boundary. If the updated position falls outside the boundary, we subtract 15 pixels from the position and set the velocity to a negative value. <a href="https://github.com/Svorpal/FPGA_website/blob/main/ultimate/boids_update.sv#L378-L408"> [code snippet]</a></p>
+
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> Following this state, the FSM remains in the FINISH state until the enable signal received as input from the outer module becomes 1.</p>
+
+
+
+
       </div>
     <hr id='testing'>
 <br> <br> <br> <br> <br> <br>
       <div style="text-align:center;">
-              <h2>Testing</h2>
-              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum lorem nulla, consectetur at leo vel, pretium bibendum nisl. Cras blandit quam a enim ultrices, eu convallis enim posuere. Donec eleifend enim sed purus consectetur, vitae cursus lectus varius. Vivamus consectetur felis nec est venenatis posuere. Phasellus vitae aliquet erat. In laoreet lacinia mollis. Quisque iaculis nisl fermentum pharetra lobortis. Donec rhoncus dui sem, ac molestie leo tristique vel. Phasellus in nibh feugiat, fringilla lectus in, elementum magna. Etiam quis dui condimentum, tempus ex in, dapibus est. Cras ut congue augue. Donec ac enim ex. Ut id tristique risus, vel porttitor quam. Sed ultricies enim eu nibh porttitor, vel sodales enim feugiat. Fusce volutpat venenatis magna ac ultrices. Curabitur eget urna ut nulla mattis convallis non eu diam.</p>
+              <h2>Testing, Results, and Analysis</h2>
+              <h3> Execution Frequency </h3>
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;">In an attempt to decrease the overall execution time, we decided to increase the frequency of the clock applied to the boids update algorithm logic on the FPGA. Initially, the clock speed was 50 MHz, but we wanted to see if it was possible to increase the frequency without causing any issues with how the algorithm worked. We first started testing with 100 boids being initialized, hoping that the faster clock speed of 65 MHz would provide us with a shorter execution time. However, initially, things were working well and boids were following the “correct” paths. However, very quickly, boids would start to be updated incorrectly, with boids gaining velocity values significantly higher than the maximum speed limit and no longer obeying the boundary conditions. After multiple attempts failing, we tried the same clock speed with 20 boids, to see if this was an issue when performing the algorithm on a smaller set. With 20 boids, we were able to maintain the correct execution of the algorithm with a frequency of 65 MHz for a longer period of time, though after a couple of minutes, we saw a couple boids start to become incorrectly updated. In this case, a couple of the boids would move incredibly quickly around the screen, sometimes just disappearing completely outside of the boundaries. We believe this is a result of not being able to read and write fast enough to the memory. This could also be a bug with our handshake logic that was being used to communicate between the HPS and the FPGA. Maybe the handshake bit was not being set correctly and those boids that became erratic were no longer following the state machines controlling the updates. </p>
+
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> We are not exactly sure why this happens but with more experimentation, we would be able to provide a more detailed explanation. </p>
+              <hr>
+
+              <h3> Avoid Factor Issue</h3>
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> Additionally, we encountered issues with the avoid factor when implemented on the FPGA. </p>
+
+              <iframe width="560" height="315" src="https://www.youtube.com/embed/0whQLqGJJgY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+              <h3> <b> Alternative Design Run with 150 boids, avoidfactor = 0.01, protectrange =  2</b> </h3> <br>
+
+              <iframe width="560" height="315" src="https://www.youtube.com/embed/L3WrtpPlQ-k" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>              
+              <h3> <b> Alternative Design Run with 150 boids, avoidfactor = 0.05, protectrange =  8</b> </h3> <br>
+
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> In the videos above, it's obvious that the boids are forming small groups, but those groups are completely avoiding the others. The videos also show boids flickering, though this is a direct result of boids being updated and overwriting the boids that have not been updated yet. It’s important to note that this flickering is normal as the boids position needs to be updated, which can be seen in the HPS implementation with a large number of boids. What’s abnormal though is that with only 20 boids, there should not be any flickering since the boids will be spaced out more. With a large number of boids, the boids get pushed closer together, overpowering the avoid factor and causing the flickering. We are unsure as to why this was happening in the FPGA implementation. Unfortunately, we were unable to implement this functionality into our final design.</p> <hr>
+
+              <h3> Modelsim Verification</h3>
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> To make sure our design is working properly, we wrote a simple SystemVerilog testbench and compare the output with the C baseline design. We tested it by initializing 3 boids with the initial condition shown in Figure 13, where boids_array[0+N*4] and boids_array[1+N*4] are the x and y positions, and boids_array[3+N*4] and boids_array[4+N*4] are the velocities. </p>
+
+              <img class="img-rounded" src="pictures/fuck2.png" alt="Generic placeholder image" height="450">
+              <h3> <b>Figure 13. The hardware structure on the FPGA side.</b> </h3> <br>
+
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;">We compared the result by observing the waveform and the output from the C code. As the figures below show, the result calculated by the boids_update module is almost the same as the C baseline implementation in the first 2 iterations.  </p>
+
+              <img class="img-rounded" src="pictures/C code result.jpg" alt="Generic placeholder image">
+              <h3> <b>Figure 14. C code result</b> </h3> <br>
+
+              <img class="img-rounded" src="pictures/Modelsim_result.jpg" alt="Generic placeholder image">
+              <h3> <b>Figure 15. Modelsim_result</b> </h3> <br> <hr>
+
+              <h3> Speed of Execution </h3>
+               <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> To test our design, we changed the number of boids in both the baseline and alternative design, and we also changed the clock frequency of the FPGA design. Below is the execution frequency and time for different numbers of boids by both baseline and alternative design.</p>
+
+               <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> For the Baseline design, the HPS clock frequency was kept at a constant 900 MHz by default. We increased the number of boids until the boids’ movements became jittery and can no longer retain the 60 FPS framerate.  The maximum number of boids that can be achieved by the HPS is 3000.  </p>
+
+               <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> For the Alternative design, we changed the FPGA clock frequency by adding pll clocks in the Qsys. As discussed in the execution frequency section, increasing the FPGA clock frequency can lead to bad behaviors of the boids. Therefore, we only used 65 MHz for 100 boids and decided to keep the frequency at 50 MHz for the remaining testing. The maximum amount of boids that can be achieved by the alternative design is 150. If we generate more boids than this number, the FPGA will run out of logical units and would not compile.  </p>
+
+               <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> we took pictures of VGA screens for different runs and they are attached in the  <a href="https://svorpal.github.io/FPGA_website/#appendix"> Appendix C</a> and below is a table of summary.</p> <br>
+
+               <head>
+                <title>5x5 Table with Cell Borders</title>
+                <style>
+                  table {
+                    border-collapse: collapse;
+                  }
+                  th, td {
+                    border: 1px solid black;
+                    padding: 8px;
+                  }
+                </style>
+              </head>
+              <body>
+                <table>
+                  <tr>
+                    <th>Number of boids </th>
+                    <th>HPS Clock Frequency (MHz)</th>
+                    <th>Baseline design Time (us)</th>
+                    <th>FPGAClock Frequency(MHz)</th>
+                    <th>Alternative Design Time (us)</th>
+                  </tr>
+                  <tr>
+                    <td>20 </td>
+                    <td>900 </td>
+                    <td>93</td>
+                    <td>50</td>
+                    <td>129</td>
+                  </tr>
+                  <tr>
+                    <td>100</td>
+                    <td>900 </td>
+                    <td>496</td>
+                    <td>65</td>
+                    <td>857</td>
+                  </tr>
+                  <tr>
+                    <td>150</td>
+                    <td>900</td>
+                    <td>803</td>
+                    <td>50</td>
+                    <td>1820</td>
+                  </tr>
+                  <tr>
+                    <td>1000</td>
+                    <td>900</td>
+                    <td>5135</td>
+                    <td>NA</td>
+                    <td>NA</td>
+                  </tr>
+                </table>
+              </body>
+
+              <br> <br>
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> From the table, we can see the time for the alternative design is actually larger than the time for the baseline design. There are several explanations for this. </p> 
+
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> First off, the clock frequency on the HPS is 18 times faster than that on the FPGA, meaning the baseline has more cycles per second than the alternative. Therefore, it is sort of expected that the baseline design has lower time than the alternative. </p> 
+
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> Secondly, the baseline time accounts for the HPS boid algorithm computation and HPS drawing on the VGA only.  However, the alternative time incorporates the time for  HPS writing to SRAM, FPGA reading from SRAM, FPGA boid algorithm execution, FPGA writing to SRAM, HPS reading from SRAM, and HPS drawing on the VGA. Since we are using M10k blocks in SRAM, it takes 1 cycle to store and 2 cycles to read, which leads to a lot of overhead and latency bidirectionally between FPGA and SRAM and between HPS and SRAM, especially as the number of boids increases. To get an idea of how much the actual computation takes on the FPGA side, we use signal tap.  </p> 
+
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> For 150 boids, we used the signal tap to figure out the computation time on the FPGA side only. </p> 
+
+              <img class="img-rounded" src="pictures/FPGA_150_time_dec.jpg" alt="Generic placeholder image" height = "450">
+              <h3> <b>Figure 16.  FPGA computatation cycles for 150 boids in decimal</b> </h3> <br>
+
+              <img class="img-rounded" src="pictures/FPGA_150_time.jpg" alt="Generic placeholder image" height = "550">
+              <h3> <b>Figure 17. FPGA computatation cycles on signal tap for 150 boids</b> </h3> <br> 
+
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> As indicated by the finished signal, the update of 150 boids without reading from or writing to the memory takes 45900 cycles. 45900 cycles * 20 nanoseconds/cycle = 918000 nanoseconds = 918 us. On the other hand, the HPS takes 803 us to compute and draw. Since the HPS is using 900 MHz, which is 18 times faster than the 50 MHz on the FPGA, if we were using the same clock frequency on the FPGA, we would expect the computation to be 918 / 18 = 51 us, which is significantly faster than the computation time on HPS. Hence, we can see from computation-wise only, our verilog implementation of the boid algorithm actually has a good speed-up. </p>
+
+
       </div>
 
     <hr id='conclusion'>
 <br> <br> <br> <br> <br> <br>
       <div style="text-align:center;">
               <h2>Conclusion</h2>
-              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum lorem nulla, consectetur at leo vel, pretium bibendum nisl. Cras blandit quam a enim ultrices, eu convallis enim posuere. Donec eleifend enim sed purus consectetur, vitae cursus lectus varius. Vivamus consectetur felis nec est venenatis posuere. Phasellus vitae aliquet erat. In laoreet lacinia mollis. Quisque iaculis nisl fermentum pharetra lobortis. Donec rhoncus dui sem, ac molestie leo tristique vel. Phasellus in nibh feugiat, fringilla lectus in, elementum magna. Etiam quis dui condimentum, tempus ex in, dapibus est. Cras ut congue augue. Donec ac enim ex. Ut id tristique risus, vel porttitor quam. Sed ultricies enim eu nibh porttitor, vel sodales enim feugiat. Fusce volutpat venenatis magna ac ultrices. Curabitur eget urna ut nulla mattis convallis non eu diam.</p>
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;">Initially, we expected the execution time of the alternative design FPGA to be significantly faster when compared to the baseline design on the ARM processor. However, this was not immediately apparent when directly comparing the execution times of both. In fact, the execution time of FPGA was 30 microseconds slower than the ARM implementation when running with 20 boids, and when using 150 boids, the FPGA implementation finished executing in 1800 microseconds, while the ARM finished in 800 microseconds. While this is a substantial difference between the two implementations we need to consider not only the clock speeds between the two processors, but also the latency incurred when reading and writing to the SRAM on both the ARM side and the FPGA side.</p>
+
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> First, we need to address the elephant in the room: the ARM A9 core frequency versus the FPGA frequency. The ARM A9 operates at a frequency of 900 MHz, while the FPGA operates at 50 MHz on its main clock. That means that the ARM A9 operates 18 times faster than the FPGA, so it was crucial to create an algorithm that could perform the algorithm in less cycles to ideally perform better in terms of execution time. While we didn’t see a decrease in the overall execution time when implemented on the FPGA, it is important to note that our FPGA design performed the boid update algorithm in 45,000 cycles with 20 boids. We computed the number of cycles on the ARM implementation, the baseline design in C, to be 90,000 cycles per boid update. While the execution time is slower, we did achieve our goal of decreasing the number of cycles, and we decreased the cycles by half, which was really impressive to see. We also need to take into consideration the inherent latency caused by reading and writing from memory on the FPGA side. This latency causes a decrease in the execution time and number of cycles, which could be a reason why the execution time on the FPGA implementation was slower. One way we could try to improve this latency would be to implement a pipelined SRAM, meaning we could read and write faster, losing the extra cycle it takes for the read.</p>
+
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> To improve upon our design, we would like to incorporate a correct division or a reciprocal module for the calculation of the speed in the boids update function. We were unable to successfully incorporate either of these modules before the end of the project, and this would allow for a “better simulation of the boids” as they would have more of a random flight path. Currently, our design implements updating the speed by shifting the values by 3, and while this is quick, it causes the boids to continually shift around in the upper left hand corner of the boundary. The final state of the division module allows for correct computation of positive input values, but fails when the inputs are negative, which is not good as the speed will be negative a decent amount of the time. Additionally, the division module we made required about 80 cycles for the calculation to finish, which would slow down the execution time of each boid, especially with a large number of boids. That is why we also considered creating a reciprocal module, which would take an input, calculate the reciprocal, and pass that value into a multiplication module instead of a division module. Ideally, this would be faster than division and would also work for both positive and negative values. </p>
+
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;">Another way we can improve upon our design would be to avoid the use of registers when storing the updated values of each boid’s x-position, y-position, x-velocity, and y-velocity values. The current implementation, which uses an array of pointers associated with the values for each boid listed above, has a few key problems limiting our design. As we increase the number of boids we want to simulate, we use an increasing number of hardware resources, maxing out the FPGA simulation to just 150 boids. However, if we want to increase the number of boids to say 500 boids, or even a thousand or more, we could take a different approach: directly reading from and writing to the memory address directly. Since we would be reading and writing directly, there would be no need to include registers for storing the values of each of the boid properties. As a result, we could drastically reduce the number of logic units required for holding those values. However, one problem immediately arises with this design. When writing to the memory, we can do that operation in one cycle, though when reading from memory, it takes 2 cycles to fetch and receive the data. This inherent latency when reading can cause substantial performance degradation when simulating a large number of boids. As an example, if we were to compile a design that used 1,000 boids, we could potentially see an increase of approximately 4,000 cycles. We believe this would be true since loading from a register takes only one cycle, though if we are reading from a memory location, we need to wait an additional cycle. However, this calculation is dependent on each boid being far apart from each other. This value can substantially increase when the boids get closer together and start following each other’s path more closely, requiring the logic to loop through each boid that’s in the neighboring boids zone as discussed previously. </p>
+
+              <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> For the baseline design, we re-used Michael’s code from ECE 4760, where he implemented the boids algorithm purely in C. For our alternative design on the FPGA, we developed some of our modules using templates provided by Professor Hunter Adam’s example code, while not using any outside sources or modules. We also did not use any of Altera’s IP and any code in the public domain.</p>
+
       </div>
 
-    <hr id='team'>
+<hr id='team'>
 <br> <br> <br> <br> <br> <br>
-    <div class="row" style="text-align:center;">
-          <h2>Work Distribution</h2>
-          <div style="text-align:center;">
-              <img class="img-rounded" src="pics/group.jpg" alt="Generic placeholder image" style="width:80%;">
-              <h4>Project group picture</h4>
-          </div>
-          <div class="col-md-6" style="font-size:16px">
-              <img class="img-rounded" src="pics/a.png" alt="Generic placeholder image" width="240" height="240">
-              <h3>Rick</h3>
-              <p class="lead">netid@cornell.edu</p>
-              <p>Designed the overall software architecture (Just being himself).
-          </div>
-          <div class="col-md-6" style="font-size:16px">
-              <img class="img-rounded" src="pics/b.png" alt="Generic placeholder image" width="240" height="240">
-              <h3>Morty</h3>
-              <p class="lead">netid@cornell.edu</p>
-              <p>Tested the overall system.
-          </div>
-      </div>
+      <div class="row" style="text-align:center;">
+            <h2>Our team</h2>
+            <div class="col-md-6" style="font-size:16px">
+                <img class="img-rounded" src="pics/yw.jpg" alt="Generic placeholder image" width="390" height="400">
+                <h3>Michael Wu</h3>
+                <p class="lead">yw2464@cornell.edu</p>
+            </div>
+            <div class="col-md-6" style="font-size:16px">
+                <img class="img-rounded" src="pics/yl.jpg" alt="Generic placeholder image" width="350" height="400">
+                <h3>Yen-Hsing Li</h3>
+                <p class="lead">yl2924@cornell.edu </p>  
+            </div>
+            <div class="col-md-6" style="font-size:16px">
+                <img class="img-rounded" src="pics/m.jpg" alt="Generic placeholder image" width="350" height="400">
+                <h3>Matt Hales</h3>
+                <p class="lead">mah426@cornell.edu </p>  
+            </div>
+        </div>
+  </div>
 
-    <hr id='appendix'>
-<br> <br> <br> <br> <br> <br> 
-      <div class="row">
-              <h2>Code Appendix</h2>
-              <pre><code>
-// Hello World.c
-int main(){
-  printf("Hello World.\n");
-}
-              </code></pre>
-      </div>
 
+<hr id='appendix'>
+<br> <br> <br> <br> <br> <br>
+<div style="text-align:center;">
+    <h2>Appendix A : Permissions</h2>
+    <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;">"The group approves this report for inclusion on the course website." </p>
+    <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;">“The group approves the video for inclusion on the course youtube channel." </p>
+</div>
+
+<div style="text-align:center;font-size:18px">
+    <h2>Appendix B : Work Cited</h2>
+</div>
+  
+<div style="text-align:left;font-size:18px;text-indent: 75px;">
+      <a href="https://people.ece.cornell.edu/land/courses/ece4760/labs/f2021/lab2boids/Boids-predator.html">[1] Cornell ECE 4760, Boid Algorithm</a><br>
+</div>
+
+<div style="text-align:left;font-size:18px;text-indent: 75px;">
+      <a href="https://people.ece.cornell.edu/land/courses/ece5760/DE1_SOC/HPS_peripherials/Examples_version_18.html">[2] DE1-SoC: Examples verified for Quartus version 18.1, Cornell ece5760</a><br>
+</div>
+
+<div style="text-align:center;font-size:18px">
+    <h2>Appendix C : VGA display for baseline and alternative Runs</h2>
+    <h3> Baseline </h3>
+
+    <img class="img-rounded" src="pictures/hps_20.jpg" alt="Generic placeholder image" height = "750">
+    <h3> <b>Figure C1. Baseline VGA screen with 20 boids, 900 MHz</b> </h3> <br> 
+
+    <img class="img-rounded" src="pictures/hps_100.jpg" alt="Generic placeholder image" height = "750">
+    <h3> <b>Figure C2. Baseline VGA screen with 100 boids, 900 MHz</b> </h3> <br> 
+
+    <img class="img-rounded" src="pictures/hps_150.jpg" alt="Generic placeholder image" height = "750">
+    <h3> <b>Figure C3. Baseline VGA screen with 150 boids, 900 MHz</b> </h3> <br> 
+
+    <img class="img-rounded" src="pictures/hps_1000.jpg" alt="Generic placeholder image" height = "750">
+    <h3> <b>Figure C4. Baseline VGA screen with 1000 boids, 900 MHz</b> </h3> <br> 
+
+    <h3> Alternative </h3>
+
+    <img class="img-rounded" src="pictures/FPGA_20_50MHZ.jpg" alt="Generic placeholder image" height = "1050">
+    <h3> <b>Figure C5. Alternative VGA screen with 20 boids, 50 MHz</b> </h3> <br> 
+
+    <img class="img-rounded" src="pictures/FPGA_100_65MHZ.jpg" alt="Generic placeholder image" height = "750">
+    <h3> <b>Figure C6. Alternative VGA screen with 100 boids, 65 MHz</b> </h3> <br> 
+
+    <img class="img-rounded" src="pictures/FPGA_150_50MHZ.jpg" alt="Generic placeholder image" height = "750">
+    <h3> <b>Figure C7. Alternative VGA screen with 150 boids, 50 MHz</b> </h3> <br> 
+
+</div>
+
+<div style="text-align:center;font-size:18px">
+  <h2>Appendix D : Github Repo</h2>
+</div>
+  
+<div style="text-align:center;font-size:18px">
+  <h3>Baseline</h3>
+</div>
+
+<div style="text-align:left;font-size:18px;text-indent: 75px;">
+      <a href="https://github.com/Svorpal/FPGA_website/blob/main/demo/multiple_boids_VGA.c">HPS Main File</a><br>
+</div>
+
+<div style="text-align:center;font-size:18px">
+  <h3>Alternative</h3>
+</div>
+
+<div style="text-align:left;font-size:18px;text-indent: 75px;">
+      <a href="https://github.com/Svorpal/FPGA_website/blob/main/demo/DE1_SoC_Computer.sv">FPGA Main File</a><br>
+</div>
+
+<div style="text-align:left;font-size:18px;text-indent: 75px;">
+      <a href="https://github.com/Svorpal/FPGA_website/blob/main/demo/three_boid_ultimate_vga.c"> HPS Main File</a><br>
+</div>
+
+<div style="text-align:left;font-size:18px;text-indent: 75px;">
+      <a href="https://github.com/Svorpal/FPGA_website/blob/main/ultimate/boids_update.sv"> Boid Update</a><br>
+</div>
+
+<div style="text-align:left;font-size:18px;text-indent: 75px;">
+      <a href="https://github.com/Svorpal/FPGA_website/blob/main/ultimate/bound_check.sv"> Boundary Check</a><br>
+</div>
+
+<div style="text-align:left;font-size:18px;text-indent: 75px;">
+      <a href="https://github.com/Svorpal/FPGA_website/blob/main/ultimate/speed_update.sv"> Speed Update</a><br>
+</div>
+
+<div style="text-align:left;font-size:18px;text-indent: 75px;">
+      <a href="https://github.com/Svorpal/FPGA_website/blob/main/ultimate/neighboring_Boids_table.v"> Neighbouring Boid Table</a><br>
+</div>
     </div><!-- /.container -->
 
 
