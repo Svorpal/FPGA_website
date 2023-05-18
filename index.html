@@ -268,7 +268,7 @@
               <h3>Alternative Design Low Level: SRAM</h3>
               <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;">The on-chip SRAM we use is composed of M10k memory blocks because it supports bi-directional dual-port access. We choose the data size to be 32 bits as the fixed number we use is 32 bits with 15 bits after the decimal point. For total memory size, 4096 bytes was used for our 100-boid implementation as each boid needs 4 memory addresses to store its x position, y position, x velocity, and y velocity.  Later when we try to implement 1000 boids, we change the total memory size to 16384 bytes. </p>
 
-              <img class="img-rounded" src="pictures/SRAM (1).PNG" alt="Generic placeholder image">
+              <img class="img-rounded" src="pictures/SRAM_1.PNG" alt="Generic placeholder image">
               <h3> <b>Figure 7. Qsys SRAM Module Setting</b> </h3> <br> <hr>
 
               <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> In Qsys, in the end, we created the on-chip memory module. Its clock is connected to the system clock from the system PLL, its reset is connected to the System PLL reset and ARM HPS reset, and its s1 is connected to the Altera AXI master as a slave. Since the SDRAM used for VGA display is also connecting to the Altera AXI master as a slave and has its address from 0x0000_0000 to 0x03ff_ffff, we change the base and end of the on-chip SRAM to be from 0x0400_0000 to 0x0400_3FFF. </p>
@@ -311,7 +311,7 @@
               <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;">A high-level diagram of the boids update module is shown in Figure 10. We use a boids_attr_array on the FPGA side for the module to get the previous updated state because the algorithm updates the boids sequentially in each update. This is one of the design tradeoffs we made when we designed this hardware structure. We could use only the SRAM instead of creating this local array, but it would substantially increase the overall cycle time due to read/write latency. Conversely, creating this array requires a significant number of logic units, which could limit our hardware utility when we scale up the boids. As our main objective is to speed up the updating process on the FPGA, we made the choice of creating a local array to store the boids’ state. Another design decision we made is the 12.15 format fix point representation, this is because we used fix15 in our C baseline code, and each multiplier in FPGA consists of 27 bits.</p>
 
 
-              <img class="img-rounded" src="pictures/hardware HL.jpg" alt="Generic placeholder image" height="550">
+              <img class="img-rounded" src="pictures/hardware_HL.jpg" alt="Generic placeholder image" height="550">
               <h3> <b>Figure 10. The hardware structure on the FPGA side.</b> </h3> <br>
 
               <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;"> In order to establish communication between the SRAM and the boids_update.sv, we wrote a 4-state finite-state machine(FSM_2 in Figure 11). This FSM enables the boid_update module to identify the boid currently being updated and determine the appropriate address for accessing the boids_attr_array. After the INIT state, the FSM enters CALC state and the counter starts from 0, which means that the update starts from boid 0. The boids_update module also enables and starts to calculate in this state. Upon receipt of the finish flag from boids_update.sv, the FSM transitions to the "DONE" state and proceeds to increment the counter by 1, initiating the update for the next boid. After all the boids finish their update, it then switches to ALL_FINISH state, an all_finish flag is asserted in this state indicating that we can start writing the updated value from boids_attr_array back to the SRAM. <a href="https://github.com/Svorpal/FPGA_website/blob/main/ultimate/DE1_SoC_Computer.sv#L597-L664"> [code snippet]</a></p>
@@ -375,7 +375,7 @@
 
               <p style="text-align: left;padding: 0px 30px;font-size:18px;text-indent: 55px;">We compared the result by observing the waveform and the output from the C code. As the figures below show, the result calculated by the boids_update module is almost the same as the C baseline implementation in the first 2 iterations.  </p>
 
-              <img class="img-rounded" src="pictures/C code result.jpg" alt="Generic placeholder image">
+              <img class="img-rounded" src="pictures/C_code_result.jpg" alt="Generic placeholder image">
               <h3> <b>Figure 14. C code result</b> </h3> <br>
 
               <img class="img-rounded" src="pictures/Modelsim_result.jpg" alt="Generic placeholder image">
@@ -488,7 +488,7 @@
                 <p class="lead">yw2464@cornell.edu</p>
             </div>
             <div class="col-md-6" style="font-size:16px">
-                <img class="img-rounded" src="pics/yl.jpg" alt="Generic placeholder image" width="350" height="430">
+                <img class="img-rounded" src="pics/yl.JPG" alt="Generic placeholder image" width="350" height="430">
                 <h3>Yen-Hsing Li</h3>
                 <p class="lead">yl2924@cornell.edu </p>  
             </div>
